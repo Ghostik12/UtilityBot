@@ -3,6 +3,8 @@ using Microsoft.Extensions.Hosting;
 using System;
 using System.Text;
 using Telegram.Bot;
+using UtilityBot.Controllers;
+using UtilityBot.Services;
 
 namespace UtilityBot
 {
@@ -25,9 +27,13 @@ namespace UtilityBot
 
         static void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<ITelegramBotClient>(provider => new TelegramBotClient("6511541259:AAFl-SdhJFFLxDs2m9nBEbmuu0oHcPUyFUs"));
-
+            services.AddSingleton<ITelegramBotClient>(provider => new TelegramBotClient("Bot Token"));
             services.AddHostedService<Bot>();
+            services.AddSingleton<IStorage, MemoryStorage>();
+            services.AddTransient<TextMessageController>();
+            services.AddTransient<InLineKeyboardController>();
+            services.AddTransient<Addition>();
+            services.AddTransient<Quantity>();
         }
     }
 }

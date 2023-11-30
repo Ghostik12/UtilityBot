@@ -9,16 +9,22 @@ using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Exceptions;
+using UtilityBot.Controllers;
+using UtilityBot.Services;
 
 namespace UtilityBot
 {
     internal class Bot : BackgroundService
     {
         private ITelegramBotClient _telegramBotClient;
+        private TextMessageController _textMessageController;
+        private InLineKeyboardController _inLineKeyboardController;
 
-        public Bot(ITelegramBotClient telegramBotClient)
+        public Bot(ITelegramBotClient telegramBotClient, TextMessageController textMessageController, InLineKeyboardController inLineKeyboardController)
         {
             _telegramBotClient = telegramBotClient;
+            _textMessageController = textMessageController;
+            _inLineKeyboardController = inLineKeyboardController;
         }
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -29,22 +35,17 @@ namespace UtilityBot
 
         async Task HandleUpdateAsync (ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
-            if (update.Type == UpdateType.Message)
-                switch (update.Message!.Type) 
-                {
-                    case MessageType.Text :
-                        Console.WriteLine($"{update.Message.Text}");
-                        string str = update.Message.Text;
-                        await _telegramBotClient.SendTextMessageAsync(update.Message.Chat.Id, $"Длина сообщения: {str.Length} знаков", cancellationToken: cancellationToken);
-                        return;
-                    default:
-                        await _telegramBotClient.SendTextMessageAsync(update.Message.Chat.Id, $"Не верный формат сообщения, отправте сообщение", cancellationToken: cancellationToken);
-                        return;
-                }
-
             if (update.Type == UpdateType.CallbackQuery)
-                await _telegramBotClient.SendTextMessageAsync(update.CallbackQuery.From.Id, "Не верный формат сообщения, отправте сообщение", cancellationToken : cancellationToken);
-            return;
+            {
+                await _inLineKeyboardController.Handle(update.CallbackQuery, cancellationToken);
+                return;
+            }
+
+            if (update.Type == UpdateType.Message)
+            {
+                await _textMessageController.Handle(update.Message, cancellationToken);
+                return;
+            }
         }
 
         Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
